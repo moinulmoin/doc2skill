@@ -285,7 +285,7 @@ async def test_api_key(request: dict):
         
         # Test with a minimal API call
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5",
             max_tokens=10,
             messages=[{"role": "user", "content": "test"}]
         )

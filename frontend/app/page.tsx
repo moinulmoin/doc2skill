@@ -539,7 +539,7 @@ export default function Home() {
               </p>
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
                 <p className="text-xs text-amber-800">
-                  <strong>Note:</strong> Enhancement uses Claude Sonnet 4 and may incur API costs.
+                  <strong>Note:</strong> Enhancement uses Claude Sonnet 4.5 and may incur API costs.
                   Get your API key from{' '}
                   <a
                     href="https://console.anthropic.com/"
