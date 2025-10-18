@@ -30,7 +30,9 @@ export default function RootLayout({
       >
         <OpenPanelComponent
           clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || ''}
+          apiUrl="/api/op"
           trackOutgoingLinks={true}
+          trackScreenViews={false}
         />
         {children}
       </body>

@@ -40,6 +40,16 @@ class DocToSkillConverter:
         self.pending_urls = deque(start_urls)
         self.pages = []
         
+        # Session with proper headers for documentation sites
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (compatible; Doc2Skill-Scraper/1.0; +https://github.com/moinulmoin/doc2skill)',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+        })
+        
         # Create directories
         os.makedirs(f"{self.data_dir}/pages", exist_ok=True)
         os.makedirs(f"{self.skill_dir}/references", exist_ok=True)
@@ -199,31 +209,44 @@ class DocToSkillConverter:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(page, f, indent=2, ensure_ascii=False)
     
-    def scrape_page(self, url):
-        """Scrape a single page"""
-        try:
-            print(f"  {url}")
-            
-            headers = {'User-Agent': 'Mozilla/5.0 (Documentation Scraper)'}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            page = self.extract_content(soup, url)
-            
-            self.save_page(page)
-            self.pages.append(page)
-            
-            # Add new URLs
-            for link in page['links']:
-                if link not in self.visited_urls and link not in self.pending_urls:
-                    self.pending_urls.append(link)
-            
-            # Rate limiting
-            time.sleep(self.config.get('rate_limit', 0.5))
-            
-        except Exception as e:
-            print(f"  ✗ Error: {e}")
+    def scrape_page(self, url, max_retries=3):
+        """Scrape a single page with retry logic"""
+        for attempt in range(max_retries):
+            try:
+                print(f"  {url}" if attempt == 0 else f"  Retry {attempt + 1}: {url}")
+                
+                # Use session for connection pooling
+                response = self.session.get(url, timeout=30)
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                page = self.extract_content(soup, url)
+                
+                self.save_page(page)
+                self.pages.append(page)
+                
+                # Add new URLs
+                for link in page['links']:
+                    if link not in self.visited_urls and link not in self.pending_urls:
+                        self.pending_urls.append(link)
+                
+                # Rate limiting - increased for safety
+                time.sleep(self.config.get('rate_limit', 1.0))
+                return  # Success, exit retry loop
+                
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:
+                    print(f"  ✗ Failed after {max_retries} attempts: {e}")
+                    return
+                
+                # Exponential backoff
+                wait_time = (2 ** attempt) + 1
+                print(f"  ⚠ Attempt {attempt + 1} failed: {e}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                
+            except Exception as e:
+                print(f"  ✗ Unexpected error: {e}")
+                return
     
     def scrape_all(self):
         """Scrape all pages"""
@@ -641,8 +664,8 @@ def interactive_config():
     }
     
     # Settings
-    rate = input("\nRate limit (seconds) [0.5]: ").strip()
-    config['rate_limit'] = float(rate) if rate else 0.5
+    rate = input("\nRate limit (seconds) [1.0]: ").strip()
+    config['rate_limit'] = float(rate) if rate else 1.0
     
     max_p = input("Max pages [500]: ").strip()
     config['max_pages'] = int(max_p) if max_p else 500
@@ -703,7 +726,7 @@ def main():
                 'code_blocks': 'pre code'
             },
             'url_patterns': {'include': [], 'exclude': []},
-            'rate_limit': 0.5,
+            'rate_limit': 1.0,
             'max_pages': 500
         }
     

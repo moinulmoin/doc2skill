@@ -12,6 +12,7 @@ import subprocess
 import uuid
 import json
 import os
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -30,6 +31,13 @@ app.add_middleware(
 # For production, consider using Redis or a database
 jobs = {}
 
+# Rate limit tracking
+rate_limit_status = {
+    "is_limited": False,
+    "message": None,
+    "reset_time": None
+}
+
 # Ensure output directory exists
 os.makedirs("../output", exist_ok=True)
 
@@ -39,6 +47,7 @@ class SkillRequest(BaseModel):
     description: Optional[str] = None
     enhance: bool = True
     config: Optional[dict] = None
+    api_key: Optional[str] = None
 
 class JobStatus(BaseModel):
     job_id: str
@@ -75,13 +84,14 @@ async def create_skill(request: SkillRequest, background_tasks: BackgroundTasks)
         name=request.name,
         description=request.description,
         enhance=request.enhance,
-        config=request.config
+        config=request.config,
+        api_key=request.api_key
     )
     
     return {"job_id": job_id, "status": "processing"}
 
 
-def run_scraper(job_id: str, url: str, name: str, description: Optional[str], enhance: bool, config: Optional[dict]):
+def run_scraper(job_id: str, url: str, name: str, description: Optional[str], enhance: bool, config: Optional[dict], api_key: Optional[str]):
     """Run the existing doc_scraper.py script"""
     try:
         jobs[job_id]["message"] = "Scraping documentation..."
@@ -111,8 +121,8 @@ def run_scraper(job_id: str, url: str, name: str, description: Optional[str], en
         # Set environment variables for enhancement
         env = os.environ.copy()
         if enhance:
-            # Pass Anthropic API credentials from environment
-            anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
+            # Use user-provided API key first, fallback to environment
+            anthropic_api_key = api_key or os.environ.get('ANTHROPIC_API_KEY')
             anthropic_base_url = os.environ.get('ANTHROPIC_BASE_URL', 'https://api.anthropic.com')
             
             if anthropic_api_key:
@@ -132,6 +142,14 @@ def run_scraper(job_id: str, url: str, name: str, description: Optional[str], en
             timeout=3600,  # 1 hour max
             env=env
         )
+        
+        # Check for API rate limit errors
+        stderr_output = result.stderr.lower()
+        if "rate_limit" in stderr_output or "too many requests" in stderr_output or "429" in stderr_output:
+            rate_limit_status["is_limited"] = True
+            rate_limit_status["message"] = "API rate limit exceeded. Please try again later or use your own API key."
+            rate_limit_status["reset_time"] = time.time() + 3600  # 1 hour from now
+            raise Exception(f"API rate limit exceeded: {result.stderr}")
         
         if result.returncode != 0:
             raise Exception(f"Scraper failed: {result.stderr}")
@@ -251,6 +269,31 @@ async def list_skills():
             skills.append(skill_data)
     
     return {"skills": sorted(skills, key=lambda x: x['created'], reverse=True)}
+
+
+@app.post("/api/test-api-key")
+async def test_api_key(request: dict):
+    """Test if an API key is valid"""
+    api_key = request.get("api_key")
+    
+    if not api_key or not api_key.startswith("sk-ant-"):
+        return {"valid": False, "error": "Invalid API key format"}
+    
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        
+        # Test with a minimal API call
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "test"}]
+        )
+        
+        return {"valid": True}
+        
+    except Exception as e:
+        return {"valid": False, "error": str(e)}
 
 
 if __name__ == "__main__":

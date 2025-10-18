@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Loader2, Sparkles, FileText, Clock, AlertCircle, ExternalLink, Star } from 'lucide-react';
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogClose } from '@/components/ui/dialog';
+import { Download, Loader2, Sparkles, FileText, Clock, AlertCircle, ExternalLink, Star, Key } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 interface Preset {
@@ -46,6 +47,9 @@ export default function Home() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(false);
   const [enhance, setEnhance] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [validatingApiKey, setValidatingApiKey] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const op = useOpenPanel();
@@ -57,7 +61,7 @@ export default function Home() {
       .catch(err => console.error('Failed to load presets:', err));
 
     loadSkills();
-  }, []);
+    }, []);
 
   const loadSkills = async () => {
     try {
@@ -68,6 +72,8 @@ export default function Home() {
       console.error('Failed to load skills:', err);
     }
   };
+
+  
 
   useEffect(() => {
     if (!jobId) return;
@@ -120,6 +126,44 @@ export default function Home() {
     }
   };
 
+  const handleEnhanceToggle = (checked: boolean) => {
+    if (checked && !apiKey) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    setEnhance(checked);
+  };
+
+  const validateAndSaveApiKey = async () => {
+    if (!apiKey.startsWith('sk-ant-')) {
+      alert('Please enter a valid Claude API key starting with "sk-ant-"');
+      return;
+    }
+
+    setValidatingApiKey(true);
+    
+    try {
+      // Simple validation by testing the API
+      const response = await fetch(`${API_URL}/api/test-api-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: apiKey })
+      });
+
+      if (response.ok) {
+        setShowApiKeyModal(false);
+        setEnhance(true);
+        alert('API key validated successfully!');
+      } else {
+        alert('Invalid API key. Please check your key and try again.');
+      }
+    } catch (error) {
+      alert('Failed to validate API key. Please try again.');
+    } finally {
+      setValidatingApiKey(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -145,6 +189,10 @@ export default function Home() {
 
       if (selectedPreset && presets[selectedPreset]) {
         payload.config = presets[selectedPreset];
+      }
+
+      if (enhance && apiKey) {
+        payload.api_key = apiKey;
       }
 
       const res = await fetch(`${API_URL}/api/create-skill`, {
@@ -285,7 +333,7 @@ export default function Home() {
                 <Switch
                   id="enhance"
                   checked={enhance}
-                  onCheckedChange={setEnhance}
+                  onCheckedChange={handleEnhanceToggle}
                 />
               </div>
 
@@ -475,6 +523,81 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* API Key Modal */}
+      <Dialog open={showApiKeyModal} onOpenChange={setShowApiKeyModal}>
+        <DialogHeader>
+          <DialogTitle>Claude API Key Required</DialogTitle>
+          <DialogClose onClick={() => setShowApiKeyModal(false)} />
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                To enable AI enhancement, you need to provide your Claude API key. 
+                Your API key is only used for this session and never stored.
+              </p>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-xs text-amber-800">
+                  <strong>Note:</strong> Enhancement uses Claude Sonnet 4 and may incur API costs. 
+                  Get your API key from{' '}
+                  <a 
+                    href="https://console.anthropic.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Anthropic Console
+                  </a>
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API Key</Label>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder="sk-ant-..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowApiKeyModal(false);
+                  setEnhance(false);
+                }}
+                className="flex-1"
+                disabled={validatingApiKey}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={validateAndSaveApiKey}
+                disabled={!apiKey.startsWith('sk-ant-') || validatingApiKey}
+                className="flex-1"
+              >
+                {validatingApiKey ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Validating...
+                  </>
+                ) : (
+                  'Validate & Enable'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
