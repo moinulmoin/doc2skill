@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useOpenPanel } from '@openpanel/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export default function Home() {
   const [enhance, setEnhance] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const op = useOpenPanel();
 
   useEffect(() => {
     fetch(`${API_URL}/api/presets`)
@@ -80,6 +82,19 @@ export default function Home() {
           clearInterval(interval);
           setLoading(false);
           loadSkills();
+          
+          // Track completion or failure
+          if (data.status === 'completed') {
+            op?.track('skill_creation_completed', {
+              skill_name: name,
+              doc_url: url
+            });
+          } else if (data.status === 'failed') {
+            op?.track('skill_creation_failed', {
+              skill_name: name,
+              error_message: data.error || 'Unknown error'
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to fetch job status:', err);
@@ -92,6 +107,12 @@ export default function Home() {
   const handlePresetSelect = (presetName: string) => {
     const preset = presets[presetName];
     if (preset) {
+      // Track preset selection
+      op?.track('preset_selected', {
+        preset_name: presetName,
+        base_url: preset.base_url
+      });
+      
       setSelectedPreset(presetName);
       setUrl(preset.base_url);
       setName(preset.name);
@@ -104,6 +125,15 @@ export default function Home() {
     setLoading(true);
     setJobId(null);
     setJob(null);
+
+    // Track skill creation started
+    op?.track('skill_creation_started', {
+      skill_name: name,
+      doc_url: url,
+      has_description: !!description,
+      ai_enhancement_enabled: enhance,
+      preset_used: selectedPreset || 'custom'
+    });
 
     try {
       const payload: any = {
@@ -127,6 +157,13 @@ export default function Home() {
       setJobId(data.job_id);
     } catch (err) {
       console.error('Failed to create skill:', err);
+      
+      // Track failure
+      op?.track('skill_creation_failed', {
+        skill_name: name,
+        error_message: String(err)
+      });
+      
       alert('Failed to create skill');
       setLoading(false);
     }
@@ -141,6 +178,15 @@ export default function Home() {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
+    });
+  };
+
+  const trackDownload = (skillName: string, skillSize: number, skillUrl?: string) => {
+    op?.track('skill_download', {
+      skill_name: skillName,
+      file_size_kb: (skillSize / 1024).toFixed(1),
+      doc_url: skillUrl,
+      download_source: 'skill_gallery'
     });
   };
 
@@ -307,7 +353,11 @@ export default function Home() {
                       className="w-full"
                       size="lg"
                     >
-                      <a href={`${API_URL}${job.download_url}`} download>
+                      <a 
+                        href={`${API_URL}${job.download_url}`} 
+                        download
+                        onClick={() => trackDownload(name, 0, url)}
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Download {name}.zip
                       </a>
@@ -357,9 +407,9 @@ export default function Home() {
                       {skill.url && (
                         <div className="flex items-start gap-2 text-muted-foreground">
                           <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                          <a 
-                            href={skill.url} 
-                            target="_blank" 
+                          <a
+                            href={skill.url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="truncate hover:text-blue-600 hover:underline"
                           >
@@ -381,7 +431,11 @@ export default function Home() {
                       className="w-full"
                       size="lg"
                     >
-                      <a href={`${API_URL}${skill.download_url}`} download>
+                      <a 
+                        href={`${API_URL}${skill.download_url}`} 
+                        download
+                        onClick={() => trackDownload(skill.name, skill.size, skill.url)}
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Download
                       </a>
@@ -396,25 +450,17 @@ export default function Home() {
 
       <footer className="mt-16 py-8 border-t bg-white/50">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-2">
-          <p className="text-sm font-medium text-gray-900">Doc2Skill</p>
+          <p className="font-medium text-gray-900">Doc2Skill</p>
+          <p className='text-muted text-sm'>Transform documentation into Claude Skill</p>
           <p className="text-xs text-muted-foreground">
             Built by{' '}
             <a
-              href="https://github.com/moinulmoin"
+              href="https://moinulmoin.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
               Moinul Moin
-            </a>
-            {' '}and{' '}
-            <a
-              href="https://github.com/yusufkaraaslan"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Yusuf Karaaslan
             </a>
           </p>
         </div>
