@@ -1,3 +1,3 @@
 import { createNextRouteHandler } from '@openpanel/nextjs/server';
 
-export const POST = createNextRouteHandler();
+export const POST = createNextRouteHandler({});
