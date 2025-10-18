@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist generated skills
+      - ./output:/output
+      # Mount CLI scripts
+      - ./doc_scraper.py:/doc_scraper.py
+      - ./enhance_skill.py:/enhance_skill.py
+      - ./enhance_skill_local.py:/enhance_skill_local.py
+      - ./package_skill.py:/package_skill.py
+      - ./configs:/configs
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  output:
+    driver: local

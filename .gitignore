@@ -1,0 +1,9 @@
+
+# Web additions
+backend/__pycache__/
+backend/.venv/
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+.env
+.DS_Store
