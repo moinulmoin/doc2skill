@@ -42,7 +42,7 @@ export default function Home() {
   const [job, setJob] = useState<Job | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(false);
-  const [enhance, setEnhance] = useState(true);
+  const [enhance, setEnhance] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
