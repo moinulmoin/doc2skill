@@ -27,11 +27,13 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ${NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
     expose:
       - "3000"
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       - NODE_ENV=production
+      - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=${NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
     depends_on:
       backend:
         condition: service_healthy
