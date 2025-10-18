@@ -10,6 +10,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PORT=8000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      - ANTHROPIC_TIMEOUT_MS=${ANTHROPIC_TIMEOUT_MS:-3000000}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]

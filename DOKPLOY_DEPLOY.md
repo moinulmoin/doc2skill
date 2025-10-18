@@ -26,9 +26,14 @@ Set these in Dokploy:
 
 **Environment Variables**:
 ```env
-NEXT_PUBLIC_API_URL=https://your-dokploy-domain.com/backend
+NEXT_PUBLIC_API_URL=https://your-dokploy-domain.com
 PYTHONUNBUFFERED=1
 NODE_ENV=production
+
+# Anthropic API (Required for AI Enhancement)
+ANTHROPIC_API_KEY=sk-ant-your-api-key-here
+ANTHROPIC_BASE_URL=https://api.anthropic.com
+ANTHROPIC_TIMEOUT_MS=3000000
 ```
 
 ### 3. Port Configuration

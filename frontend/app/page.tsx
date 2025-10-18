@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Loader2, Sparkles, FileText, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 interface Preset {
   name: string;
@@ -41,6 +42,7 @@ export default function Home() {
   const [job, setJob] = useState<Job | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(false);
+  const [enhance, setEnhance] = useState(true);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -106,7 +108,7 @@ export default function Home() {
         url,
         name,
         description,
-        enhance: true
+        enhance
       };
 
       if (selectedPreset && presets[selectedPreset]) {
@@ -222,6 +224,22 @@ export default function Home() {
                     placeholder="React framework for UIs"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-0.5">
+                  <Label htmlFor="enhance" className="text-base">
+                    AI Enhancement
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Use Claude AI to create comprehensive skill documentation with examples
+                  </p>
+                </div>
+                <Switch
+                  id="enhance"
+                  checked={enhance}
+                  onCheckedChange={setEnhance}
+                />
               </div>
 
               <Button

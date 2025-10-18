@@ -105,7 +105,23 @@ def run_scraper(job_id: str, url: str, name: str, description: Optional[str], en
                 cmd.extend(["--description", description])
         
         if enhance:
-            cmd.append("--enhance-local")
+            # Use API-based enhancement for web (not local)
+            cmd.append("--enhance")
+        
+        # Set environment variables for enhancement
+        env = os.environ.copy()
+        if enhance:
+            # Pass Anthropic API credentials from environment
+            anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
+            anthropic_base_url = os.environ.get('ANTHROPIC_BASE_URL', 'https://api.anthropic.com')
+            
+            if anthropic_api_key:
+                env['ANTHROPIC_API_KEY'] = anthropic_api_key
+            if anthropic_base_url:
+                env['ANTHROPIC_BASE_URL'] = anthropic_base_url
+            
+            # Set timeout for Anthropic API calls
+            env['ANTHROPIC_TIMEOUT_MS'] = os.environ.get('ANTHROPIC_TIMEOUT_MS', '3000000')
         
         # Run scraper
         result = subprocess.run(
@@ -113,7 +129,8 @@ def run_scraper(job_id: str, url: str, name: str, description: Optional[str], en
             capture_output=True,
             text=True,
             cwd="..",  # Run from parent directory
-            timeout=3600  # 1 hour max
+            timeout=3600,  # 1 hour max
+            env=env
         )
         
         if result.returncode != 0:
