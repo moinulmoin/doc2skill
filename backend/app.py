@@ -156,6 +156,17 @@ def run_scraper(job_id: str, url: str, name: str, description: Optional[str], en
         if not os.path.exists(zip_path):
             raise Exception("Skill file not created")
         
+        # Save metadata alongside the zip
+        metadata_path = f"../output/{name}.json"
+        metadata = {
+            "name": name,
+            "url": url,
+            "description": description,
+            "created": os.path.getmtime(zip_path)
+        }
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f)
+        
         jobs[job_id]["status"] = "completed"
         jobs[job_id]["progress"] = 100
         jobs[job_id]["message"] = "Skill created successfully!"
@@ -219,12 +230,25 @@ async def list_skills():
     
     if output_dir.exists():
         for zip_file in output_dir.glob("*.zip"):
-            skills.append({
+            skill_data = {
                 "name": zip_file.stem,
                 "size": zip_file.stat().st_size,
                 "created": zip_file.stat().st_mtime,
                 "download_url": f"/api/download/{zip_file.stem}"
-            })
+            }
+            
+            # Load metadata if available
+            metadata_file = output_dir / f"{zip_file.stem}.json"
+            if metadata_file.exists():
+                try:
+                    with open(metadata_file, 'r') as f:
+                        metadata = json.load(f)
+                        skill_data["url"] = metadata.get("url")
+                        skill_data["description"] = metadata.get("description")
+                except:
+                    pass
+            
+            skills.append(skill_data)
     
     return {"skills": sorted(skills, key=lambda x: x['created'], reverse=True)}
 

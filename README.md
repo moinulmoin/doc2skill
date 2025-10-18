@@ -497,6 +497,10 @@ python3 doc_scraper.py --config configs/react.json
 python3 doc_scraper.py --interactive
 ```
 
+## 🙏 Acknowledgements
+
+This project builds upon the original [Skill Seekers](https://github.com/yusufkaraaslan/Skill_Seekers) by [Yusuf Karaaslan](https://github.com/yusufkaraaslan). Special thanks for the foundational work that made this possible.
+
 ## 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details

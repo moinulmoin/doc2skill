@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Loader2, Sparkles, FileText, Clock } from 'lucide-react';
+import { Download, Loader2, Sparkles, FileText, Clock, AlertCircle, ExternalLink } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 interface Preset {
@@ -30,6 +30,8 @@ interface Skill {
   size: number;
   created: number;
   download_url: string;
+  url?: string;
+  description?: string;
 }
 
 export default function Home() {
@@ -150,8 +152,8 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Skill Seekers</h1>
-              <p className="text-sm text-gray-600">Transform docs into Claude AI skills</p>
+              <h1 className="text-3xl font-bold text-gray-900">Doc2Skill</h1>
+              <p className="text-sm text-gray-600">Transform documentation into Claude AI skills</p>
             </div>
           </div>
         </div>
@@ -251,7 +253,7 @@ export default function Home() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Skill...
+                    Processing...
                   </>
                 ) : (
                   <>
@@ -260,30 +262,36 @@ export default function Home() {
                   </>
                 )}
               </Button>
+
+              {/* Time estimate warning */}
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-amber-900">
+                    Processing Time
+                  </p>
+                  <p className="text-sm text-amber-700">
+                    Skill creation may take up to 20 minutes depending on documentation size and AI enhancement settings.
+                  </p>
+                </div>
+              </div>
             </form>
 
             {/* Job Status */}
             {job && (
               <Card className="bg-muted/50">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          job.status === 'completed' ? 'default' :
-                          job.status === 'failed' ? 'destructive' :
-                          'secondary'
-                        }
-                      >
-                        {job.status}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {job.progress}%
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        job.status === 'completed' ? 'default' :
+                        job.status === 'failed' ? 'destructive' :
+                        'secondary'
+                      }
+                    >
+                      {job.status}
+                    </Badge>
                   </div>
-
-                  <Progress value={job.progress} className="h-2" />
 
                   <p className="text-sm text-muted-foreground">{job.message}</p>
 
@@ -333,26 +341,45 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {skills.map(skill => (
                 <Card key={skill.name} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                      {skill.name}
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <span className="truncate">{skill.name}</span>
                     </CardTitle>
+                    {skill.description && (
+                      <CardDescription className="line-clamp-2">
+                        {skill.description}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        {formatBytes(skill.size)}
+                    <div className="space-y-2.5 text-sm">
+                      {skill.url && (
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                          <a 
+                            href={skill.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="truncate hover:text-blue-600 hover:underline"
+                          >
+                            {skill.url}
+                          </a>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Download className="h-4 w-4 flex-shrink-0" />
+                        <span>{formatBytes(skill.size)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        {formatDate(skill.created)}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4 flex-shrink-0" />
+                        <span>{formatDate(skill.created)}</span>
                       </div>
                     </div>
                     <Button
                       asChild
                       className="w-full"
+                      size="lg"
                     >
                       <a href={`${API_URL}${skill.download_url}`} download>
                         <Download className="mr-2 h-4 w-4" />
@@ -368,16 +395,28 @@ export default function Home() {
       </main>
 
       <footer className="mt-16 py-8 border-t bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          Built on top of{' '}
-          <a
-            href="https://github.com/yusufkaraaslan/Skill_Seekers"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Skill Seekers
-          </a>
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-2">
+          <p className="text-sm font-medium text-gray-900">Doc2Skill</p>
+          <p className="text-xs text-muted-foreground">
+            Built by{' '}
+            <a
+              href="https://github.com/moinulmoin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Moinul Moin
+            </a>
+            {' '}and{' '}
+            <a
+              href="https://github.com/yusufkaraaslan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Yusuf Karaaslan
+            </a>
+          </p>
         </div>
       </footer>
     </div>
