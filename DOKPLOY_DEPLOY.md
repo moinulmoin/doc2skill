@@ -8,6 +8,27 @@ Quick guide to deploy Skill Seekers Web on [dokploy.com](https://dokploy.com).
 2. ✅ GitHub repo connected
 3. ✅ This repository pushed to GitHub
 
+## DNS Setup (Do This First!)
+
+Add these DNS records to your domain registrar:
+
+```
+Type    Name     Target                         TTL
+----    ----     ------                         ---
+A       @        [Your Dokploy Server IP]       300
+A       api      [Your Dokploy Server IP]       300
+```
+
+Or if using Dokploy's CNAME:
+```
+CNAME   @        your-app.dokploy.site         300
+CNAME   api      your-app-api.dokploy.site     300
+```
+
+**Result:**
+- `doc2skill.com` → Frontend
+- `api.doc2skill.com` → Backend
+
 ## Deployment Steps
 
 ### 1. Connect Repository
@@ -18,19 +39,26 @@ In Dokploy dashboard:
 3. Connect your GitHub repo: `moinulmoin/doc2skill`
 4. Branch: `main` (or your branch)
 
-### 2. Configure Build
+### 2. Configure Custom Domains
 
-Set these in Dokploy:
+In Dokploy, set up two services:
 
-**Docker Compose File**: `docker-compose.prod.yml`
+**Backend Service:**
+- Custom Domain: `api.doc2skill.com`
+- Docker Compose File: `docker-compose.prod.yml`
+
+**Frontend Service:**
+- Custom Domain: `doc2skill.com`
+- Docker Compose File: `docker-compose.prod.yml`
 
 **Environment Variables**:
 ```env
-NEXT_PUBLIC_API_URL=https://your-dokploy-domain.com
-PYTHONUNBUFFERED=1
+# Frontend (https://doc2skill.com)
+NEXT_PUBLIC_API_URL=https://api.doc2skill.com
 NODE_ENV=production
 
-# Anthropic API (Required for AI Enhancement)
+# Backend (https://api.doc2skill.com)
+PYTHONUNBUFFERED=1
 ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ANTHROPIC_BASE_URL=https://api.anthropic.com
 ANTHROPIC_TIMEOUT_MS=3000000
