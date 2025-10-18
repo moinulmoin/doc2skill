@@ -82,7 +82,7 @@ export default function Home() {
           clearInterval(interval);
           setLoading(false);
           loadSkills();
-          
+
           // Track completion or failure
           if (data.status === 'completed') {
             op?.track('skill_creation_completed', {
@@ -112,7 +112,7 @@ export default function Home() {
         preset_name: presetName,
         base_url: preset.base_url
       });
-      
+
       setSelectedPreset(presetName);
       setUrl(preset.base_url);
       setName(preset.name);
@@ -157,13 +157,13 @@ export default function Home() {
       setJobId(data.job_id);
     } catch (err) {
       console.error('Failed to create skill:', err);
-      
+
       // Track failure
       op?.track('skill_creation_failed', {
         skill_name: name,
         error_message: String(err)
       });
-      
+
       alert('Failed to create skill');
       setLoading(false);
     }
@@ -280,7 +280,7 @@ export default function Home() {
                     AI Enhancement
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Use Claude AI to create comprehensive skill documentation with examples
+                    Use AI to create comprehensive skill documentation with examples
                   </p>
                 </div>
                 <Switch
@@ -353,8 +353,8 @@ export default function Home() {
                       className="w-full"
                       size="lg"
                     >
-                      <a 
-                        href={`${API_URL}${job.download_url}`} 
+                      <a
+                        href={`${API_URL}${job.download_url}`}
                         download
                         onClick={() => trackDownload(name, 0, url)}
                       >
@@ -431,8 +431,8 @@ export default function Home() {
                       className="w-full"
                       size="lg"
                     >
-                      <a 
-                        href={`${API_URL}${skill.download_url}`} 
+                      <a
+                        href={`${API_URL}${skill.download_url}`}
                         download
                         onClick={() => trackDownload(skill.name, skill.size, skill.url)}
                       >
