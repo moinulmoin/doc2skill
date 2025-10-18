@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Loader2, Sparkles, FileText, Clock, AlertCircle, ExternalLink } from 'lucide-react';
+import { Download, Loader2, Sparkles, FileText, Clock, AlertCircle, ExternalLink, Star } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 interface Preset {
@@ -195,7 +195,7 @@ export default function Home() {
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center text-center gap-3">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Doc2Skill</h1>
               <p className="text-sm text-gray-600">Transform documentation into Claude Skill</p>
@@ -448,9 +448,20 @@ export default function Home() {
       </main>
 
       <footer className="mt-16 py-8 border-t bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 text-center space-y-2">
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-3">
           <p className="font-medium text-gray-900">Doc2Skill</p>
-          <p className='text-muted text-sm'>Transform documentation into Claude Skill</p>
+          <p className='text-muted-foreground text-sm'>Transform documentation into Claude Skill</p>
+          <div className="flex items-center justify-center gap-2">
+            <a
+              href="https://github.com/moinulmoin/doc2skill"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-blue-600 transition-colors"
+            >
+              <Star className="h-4 w-4" />
+              Star on GitHub
+            </a>
+          </div>
           <p className="text-xs text-muted-foreground">
             Built by{' '}
             <a
