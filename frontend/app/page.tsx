@@ -73,7 +73,7 @@ export default function Home() {
     }
   };
 
-  
+
 
   useEffect(() => {
     if (!jobId) return;
@@ -141,7 +141,7 @@ export default function Home() {
     }
 
     setValidatingApiKey(true);
-    
+
     try {
       // Simple validation by testing the API
       const response = await fetch(`${API_URL}/api/test-api-key`, {
@@ -252,7 +252,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* Create Section */}
         <Card>
           <CardHeader>
@@ -265,7 +265,7 @@ export default function Home() {
             {/* Presets */}
             <div className="space-y-3">
               <Label>Quick Start Presets</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {Object.keys(presets).map(presetName => (
                   <Button
                     key={presetName}
@@ -534,16 +534,16 @@ export default function Home() {
           <div className="space-y-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                To enable AI enhancement, you need to provide your Claude API key. 
+                To enable AI enhancement, you need to provide your Claude API key.
                 Your API key is only used for this session and never stored.
               </p>
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
                 <p className="text-xs text-amber-800">
-                  <strong>Note:</strong> Enhancement uses Claude Sonnet 4 and may incur API costs. 
+                  <strong>Note:</strong> Enhancement uses Claude Sonnet 4 and may incur API costs.
                   Get your API key from{' '}
-                  <a 
-                    href="https://console.anthropic.com/" 
-                    target="_blank" 
+                  <a
+                    href="https://console.anthropic.com/"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
                   >
@@ -552,7 +552,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="api-key">API Key</Label>
               <div className="relative">
