@@ -30,13 +30,18 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3000
+
+# Set runtime environment variables
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_OPENPANEL_CLIENT_ID
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_OPENPANEL_CLIENT_ID=${NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
-
-ENV PORT=3000
 
 CMD ["node", "server.js"]
